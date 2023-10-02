@@ -1,0 +1,12 @@
+// wit/host.wit
+package test:plugin
+
+interface logger {
+    log: func(msg: string)-> string
+}
+
+
+world plugin {
+  import logger
+  export run: func()
+}

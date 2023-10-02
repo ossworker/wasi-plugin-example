@@ -15,8 +15,7 @@ wasmtime::component::bindgen!({
 
 // const PLUGIN_FILE: &str = "../plugin-example/target/wasm32-wasi/debug/plugin_example.wasm";
 
-// const PLUGIN_FILE: &str = "../plugin-example/demo.component.wasm";
-const PLUGIN_FILE: &str = "../plugin-component/plugin.wasm";
+const PLUGIN_FILE: &str = "../plugin-example/demo.component.wasm";
 
 struct SimpleLogger {}
 
@@ -24,6 +23,7 @@ struct SimplePluginCtx {
     logger: SimpleLogger,
     table: Table,
     context: WasiCtx,
+    http: WasiHttpCtx,
 }
 
 impl WasiView for SimplePluginCtx {
@@ -41,6 +41,15 @@ impl WasiView for SimplePluginCtx {
 
     fn ctx_mut(&mut self) -> &mut WasiCtx {
         &mut self.context
+    }
+}
+
+impl WasiHttpView for SimplePluginCtx {
+    fn http_ctx(&self) -> &WasiHttpCtx {
+        &self.http
+    }
+    fn http_ctx_mut(&mut self) -> &mut WasiHttpCtx {
+        &mut self.http
     }
 }
 
@@ -66,14 +75,15 @@ async fn main() {
 
     wasmtime_wasi::preview2::command::add_to_linker(&mut linker).unwrap();
 
-    Plugin::add_to_linker(&mut linker, |state: &mut SimplePluginCtx| &mut state.logger).unwrap();
+    Plugin::add_to_linker(&mut linker, |context| &mut context.logger).unwrap();
 
-    let table = wasmtime_wasi::preview2::Table::new();
+    let mut table = wasmtime_wasi::preview2::Table::new();
 
     let wasi_ctx = WasiCtxBuilder::new()
-        .inherit_stdin()
-        .inherit_stdout()
-        .build();
+        .build(&mut table)
+        .expect("Could not build WASI context");
+
+    let http = WasiHttpCtx::new();
 
     let mut store = Store::new(
         &engine,
@@ -81,6 +91,7 @@ async fn main() {
             logger: SimpleLogger {},
             table,
             context: wasi_ctx,
+            http,
         },
     );
 

@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "plugin"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "test:plugin"
+
+[package.metadata.component.dependencies]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cargo-component-bindings = {git = "https://github.com/bytecodealliance/cargo-component"}

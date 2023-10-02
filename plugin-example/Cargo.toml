@@ -1,13 +1,13 @@
 [package]
+edition = "2021"
 name = "plugin-example"
 version = "0.1.0"
-edition = "2021"
 
 [package.metadata.component]
-target = { path = "../plugin-host/simple-component.wit" }
+target = {path = "../plugin-host/simple-component.wit"}
 
 [lib]
-crate-type = [ "cdylib" ]
+crate-type = ["cdylib"]
 
 [dependencies]
-wit-bindgen = "0.8.0"
+wit-bindgen = "0.12.0"
