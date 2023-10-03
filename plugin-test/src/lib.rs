@@ -16,7 +16,7 @@ wasmtime::component::bindgen!({
 // const PLUGIN_FILE: &str = "../plugin-example/target/wasm32-wasi/debug/plugin_example.wasm";
 
 // const PLUGIN_FILE: &str = "../plugin-example/demo.component.wasm";
-const PLUGIN_FILE: &str = "../plugin-component/plugin.wasm";
+// const PLUGIN_FILE: &str = "../plugin-component/plugin.wasm";
 
 struct SimpleLogger {}
 
@@ -54,7 +54,10 @@ impl test::plugin::logger::Host for SimpleLogger {
 }
 
 #[tokio::main]
-async fn main() {
+async fn call_wasm(plugin_file: &str, input: serde_json::value::Value) {
+    let str = input.get("name").unwrap().as_str().unwrap();
+    println!("{}", str);
+
     let mut engine_config = wasmtime::Config::new();
     engine_config.wasm_component_model(true);
     engine_config.async_support(true);
@@ -74,6 +77,7 @@ async fn main() {
     let wasi_ctx = WasiCtxBuilder::new()
         .inherit_stdin()
         .inherit_stdout()
+        .inherit_stderr()
         .build();
 
     let mut store = Store::new(
@@ -85,11 +89,39 @@ async fn main() {
         },
     );
 
-    let component = Component::from_file(&engine, PLUGIN_FILE).expect("could not find plugin");
+    let component = Component::from_file(&engine, plugin_file).expect("could not find plugin");
 
     let (plugin, _instance) = Plugin::instantiate_async(&mut store, &component, &linker)
         .await
         .expect("could not instantialte plugin");
 
     plugin.call_run(&mut store).await.unwrap();
+}
+
+#[cfg(test)]
+mod test_plugin {
+
+    use super::*;
+
+    const PLUGIN_FILE: &str = "../plugin-component/plugin.wasm";
+
+    #[test]
+    fn test_call_wasm() {
+        let json = r#"
+        {
+            "name": "张三",
+            "age": 33,
+            "pet_phrase": [
+                "Bond, James Bond.",
+                "Shaken, not stirred."
+            ]
+        }"#;
+        // let mut map: HashMap<&str, Value> = HashMap::new();
+        // map.insert("id", Value::String("111".to_string()));
+        // map.insert("bytes", serde_json::to_value(json).unwrap());
+        // let map_param = serde_json::to_vec(&map).unwrap();
+        let params: serde_json::value::Value = serde_json::from_str(json).unwrap();
+        println!("{:#?}", params);
+        call_wasm(PLUGIN_FILE, params);
+    }
 }

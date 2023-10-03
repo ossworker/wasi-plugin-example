@@ -9,6 +9,10 @@ crate-type = ["cdylib"]
 [package.metadata.component]
 package = "test:plugin"
 
+[package.metadata.component.target]
+path = "wit"
+world = "plugin"
+
 [package.metadata.component.dependencies]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
